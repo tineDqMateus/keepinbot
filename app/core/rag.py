@@ -68,33 +68,31 @@ class LocalEmbeddings(Embeddings):
 def load_documents(corpus_path: str) -> list[dict]:
     """
     Charge tous les fichiers .txt présents dans le dossier corpus.
-
-    Paramètre :
-    - corpus_path : chemin vers le dossier contenant les documents
-      (défini dans config.py → CORPUS_PATH = "./data/corpus")
-
-    Retourne :
-    - liste de dicts, un par document :
-        {
-          "content" : texte brut du document,
-          "source"  : nom du fichier (ex: "procedure_rh.txt"),
-          "type"    : "interne" — tag de confidentialité utilisé
-                      par le routeur hybride pour décider si la donnée
-                      reste en local ou peut aller sur le cloud
-        }
+    Tague automatiquement chaque document selon son nom :
+    - fichiers contenant "code_" ou "legal_" ou "urssaf_" → type "public"
+    - tous les autres → type "interne"
+    Ce tag est utilisé par le routeur hybride pour décider
+    quel moteur LLM utiliser (local ou cloud).
     """
+    # Préfixes qui identifient un document public réglementaire
+    PUBLIC_PREFIXES = ("code_", "legal_", "urssaf_", "bodacc_")
+
     documents = []
     for filename in os.listdir(corpus_path):
         if filename.endswith(".txt"):
             path = os.path.join(corpus_path, filename)
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
+
+            # Détermination du type selon le nom du fichier
+            doc_type = "public" if filename.startswith(PUBLIC_PREFIXES) else "interne"
+
             documents.append({
                 "content": content,
                 "source": filename,
-                "type": "interne"
+                "type": doc_type
             })
-            print(f"Chargé : {filename} ({len(content)} caractères)")
+            print(f"Chargé : {filename} ({len(content)} caractères) [{doc_type}]")
     return documents
 
 

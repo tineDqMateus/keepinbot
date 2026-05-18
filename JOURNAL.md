@@ -170,3 +170,71 @@ dans l'interface quand la réponse est peu fiable.
 **Prochaine étape — J4 :** mettre en place le routeur hybride
 qui oriente chaque question vers le moteur local (données sensibles)
 ou le cloud (données publiques) selon la nature des documents concernés.
+
+
+## J4 — Routeur hybride et gestion local/cloud
+
+**Objectif :** faire en sorte que le système sache automatiquement si une question
+porte sur des données publiques ou internes, et envoie chaque requête vers le bon
+moteur — cloud ou local.
+
+---
+
+### Étape 1 — Résoudre le problème mémoire
+
+Mistral 7B nécessite environ 8 Go de RAM pour tourner sur CPU — insuffisant sur
+cette machine. Remplacé par Phi-3 Mini (Microsoft, 3.8B paramètres, ~2.2 Go) qui
+offre un bon compromis qualité/ressources pour un usage RAG.
+
+Leçon : dans Keepinbot, le LLM est interchangeable en une ligne de configuration
+— c'est exactement l'architecture modulaire prévue.
+
+**Fichier modifié :** `app/core/config.py` — paramètre `OLLAMA_MODEL`
+
+---
+
+### Étape 2 — Renforcer le system prompt
+
+Phi-3 Mini, plus petit que Mistral, a tendance à ajouter des informations non
+demandées et à ne pas s'arrêter. Le system prompt a été renforcé avec des règles
+numérotées et explicites : rester dans les documents, maximum 3 phrases, citer
+la source, ne jamais supposer.
+
+**Fichier modifié :** `scripts/test_rag.py` — constante `SYSTEM_PROMPT`
+
+---
+
+### Étape 3 — Ajouter un document public au corpus
+
+Ajouté un extrait du Code du travail (articles L1234-1 et L1222-9) pour avoir
+les deux types de documents dans la base — public et interne.
+
+Les documents sont taggés automatiquement à l'ingestion selon leur nom de fichier :
+préfixe `code_`, `legal_`, `urssaf_` → type `public`, tous les autres → type `interne`.
+
+Ce tag est stocké dans les métadonnées de chaque chunk dans ChromaDB.
+
+**Fichiers modifiés :** `data/corpus/code_travail.txt` (nouveau),
+`app/core/rag.py` — fonction `load_documents()`
+
+---
+
+### Étape 4 — Écrire et tester le routeur hybride
+
+Créé `app/core/router.py` — le composant qui décide quel moteur utiliser
+pour chaque question :
+
+| Types des chunks récupérés | Route | Moteur utilisé |
+|---|---|---|
+| Publics uniquement | cloud | API Mistral |
+| Internes uniquement | local | Ollama + Phi3 |
+| Mixtes | hybrid | Ollama + Phi3 (par sécurité) |
+
+Règle de sécurité fondamentale : dès qu'un chunk interne est impliqué,
+la génération reste en local — les données sensibles ne quittent jamais
+la machine.
+
+**Résultats validés :**
+- Question interne → route `local` ✓
+- Question mixte → route `hybrid`, génération locale ✓
+- Route `cloud` pur : fonction
