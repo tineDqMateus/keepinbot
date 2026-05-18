@@ -68,9 +68,11 @@ TOP_K = 3
 OLLAMA_BASE_URL = "http://localhost:11434"
 
 # OLLAMA_MODEL : nom du modèle chargé dans Ollama.
-#   "mistral" pointe vers mistral:latest (7B paramètres, ~4.4 Go).
-#   Alternatives possibles : "mistral:7b-instruct", "llama3", "phi3"
-OLLAMA_MODEL = "mistral"
+#   "phi3:mini" pointe vers Phi-3 Mini (3.8B paramètres, ~2.5 Go).
+#   Choix retenu pour fonctionner sur CPU avec RAM limitée.
+#   Alternatives : "mistral" (7B, ~4.4 Go — nécessite 8 Go RAM),
+#                  "llama3" (8B, ~4.7 Go), "mistral:7b-instruct"
+OLLAMA_MODEL = "phi3:mini"
 
 # ── Paramètres LLM cloud (API Mistral) ────────────────────────────────────────
 # MISTRAL_MODEL : modèle Mistral utilisé en mode cloud.

@@ -30,10 +30,12 @@ from app.core.config import OLLAMA_BASE_URL, OLLAMA_MODEL
 # - "Cite toujours le document source" → traçabilité pour l'utilisateur
 # - "Sois concis et précis" → évite les réponses verbeuses du LLM
 SYSTEM_PROMPT = """Tu es un assistant documentaire pour une PME.
-Réponds uniquement à partir des documents fournis dans le contexte.
-Si la réponse ne se trouve pas dans les documents, dis-le explicitement.
-Cite toujours le document source dans ta réponse.
-Sois concis et précis."""
+Règles strictes :
+1. Réponds UNIQUEMENT avec les informations présentes dans le contexte fourni.
+2. Si l'information n'est pas dans le contexte, réponds exactement : "Je ne trouve pas cette information dans les documents."
+3. Ne fais aucune supposition, aucune recommandation générale, aucun ajout.
+4. Cite le nom du document source entre parenthèses à la fin de ta réponse.
+5. Maximum 3 phrases. Pas de liste à puces."""
 
 
 def generate_response(question: str, chunks: list[dict]) -> str:
