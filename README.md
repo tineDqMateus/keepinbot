@@ -45,7 +45,7 @@ Les données internes d'une entreprise ne peuvent pas transiter sur des serveurs
 Keepinbot fonctionne en mode hybride :
 
 - **Données publiques** (réglementaires) → cloud · API Mistral · pgvector
-- **Données sensibles** (projets, contrats, RH) → local · Ollama + Mistral 7B · ChromaDB
+- **Données sensibles** (projets, contrats, RH) → local · Ollama + Phi-3 Mini · ChromaDB
 
 Le LLM local tourne entièrement sur la machine du client. Zéro appel externe sur les données
 sensibles.
@@ -80,7 +80,7 @@ pour démarrer, interagit uniquement via une interface web. Aucun terminal, aucu
 | Brique | Outil | Rôle |
 |---|---|---|
 | Orchestration RAG | LangChain 0.3.7 | Chaîne chunking → retrieval → génération |
-| LLM local | Ollama + Mistral 7B | Inférence locale — données sensibles |
+| LLM local | Ollama + Phi-3 Mini (3.8B) | Inférence locale — données sensibles |
 | LLM cloud | API Mistral | Performance — données publiques |
 | Embeddings local | Sentence-Transformers | Vectorisation sans appel externe |
 | Vector store local | ChromaDB | Stockage vectoriel fichier local |

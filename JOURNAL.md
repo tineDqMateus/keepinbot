@@ -238,3 +238,75 @@ la machine.
 - Question interne → route `local` ✓
 - Question mixte → route `hybrid`, génération locale ✓
 - Route `cloud` pur : fonction
+
+
+
+## J5 — Interface Streamlit — onglet Assistant
+
+**Objectif :** rendre Keepinbot utilisable — transformer le pipeline
+technique en une vraie application accessible depuis un navigateur.
+
+---
+
+### Étape 1 — Créer le point d'entrée de l'application
+
+Créé `app/main.py` qui organise l'application en quatre onglets :
+Assistant, Documentation, Collecte, Administration.
+Les trois derniers affichent un message "disponible prochainement"
+— ils seront implémentés en J6, J7 et J8.
+
+**Fichier créé :** `app/main.py`
+
+---
+
+### Étape 2 — Construire l'onglet Assistant
+
+Créé l'interface de chat avec :
+- Une zone de conversation qui conserve l'historique
+- Les sources affichées en couleur : 🟣 document interne, 🟢 document public
+- Un indicateur de routage : 🟣 local · 🟢 cloud · 🟡 hybrid
+- Un upload de nouveaux documents avec mise à jour automatique de la base
+- La liste des documents indexés
+- L'état des services (Ollama disponible ou non)
+
+**Fichier créé :** `app/tabs/assistant.py`
+
+---
+
+### Étape 3 — Itérer sur le system prompt
+
+Le modèle Phi-3 Mini avait tendance à ajouter des informations
+non demandées et à poser des questions spontanément.
+Le system prompt a été renforcé en trois itérations :
+- Ajout d'une règle "ne pose jamais de question"
+- Limite à une seule phrase de réponse
+- Interdiction d'ajouter des informations connexes
+
+**Résultats validés :**
+- Question avec réponse dans les documents → réponse courte et sourcée ✓
+- Question hors corpus → "Je ne trouve pas cette information dans les documents." ✓
+
+**Fichier modifié :** `app/core/router.py` — constante `SYSTEM_PROMPT`
+
+---
+
+### Étape 4 — Mise à jour du README
+
+Remplacement de Mistral 7B par Phi-3 Mini dans la documentation
+suite au changement effectué en J4.
+
+**Fichier modifié :** `README.md`
+
+---
+
+## État du projet après J5
+
+✓ Application Streamlit opérationnelle et accessible depuis le navigateur
+✓ Chat RAG fonctionnel avec historique, sources colorées et indicateur de routage
+✓ Upload de documents avec mise à jour automatique de la base
+✓ System prompt stabilisé — réponses concises, sourcées, sans dérive
+✓ README et journal mis à jour
+
+**Prochaine étape — J6 :** Module 2 — parsers multi-format
+(Word, PowerPoint, mails) et pipeline de génération de documentation
+à partir de sources hétérogènes.
