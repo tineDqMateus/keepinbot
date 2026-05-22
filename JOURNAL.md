@@ -310,3 +310,90 @@ suite au changement effectué en J4.
 **Prochaine étape — J6 :** Module 2 — parsers multi-format
 (Word, PowerPoint, mails) et pipeline de génération de documentation
 à partir de sources hétérogènes.
+
+
+## J6 — Module 2 : parsers multi-format et génération documentaire
+
+**Objectif :** lire des fichiers hétérogènes (Word, PowerPoint, mails)
+et générer un document structuré à partir de ces sources disparates.
+
+---
+
+### Étape 1 — Créer les fichiers de test
+
+Généré 3 fichiers fictifs simulant des documents internes d'une PME
+sur un projet fictif (projet Alpha) :
+- Un compte-rendu de réunion Word
+- Une présentation PowerPoint de lancement
+- Un mail d'échange sur le recrutement
+
+Ces fichiers couvrent les formats les plus courants en entreprise
+et permettent de tester le pipeline sur des données réalistes.
+
+**Fichiers créés :**
+- `data/samples/cr_reunion_alpha.docx`
+- `data/samples/presentation_alpha.pptx`
+- `data/samples/mail_recrutement.eml`
+- `scripts/create_samples.py` — script de génération des fichiers de test
+
+---
+
+### Étape 2 — Implémenter les parsers multi-format
+
+Écrit un parser dédié pour chaque format :
+- Word (.docx) : extraction des paragraphes dans l'ordre
+- PowerPoint (.pptx) : extraction diapositive par diapositive
+- Mail (.eml) : extraction des en-têtes et du corps du message
+- Texte brut (.txt) : lecture directe
+
+Un router de parsing détecte automatiquement le format selon
+l'extension du fichier et appelle le bon parser.
+
+**Résultat validé :**
+- cr_reunion_alpha.docx → 639 caractères extraits ✓
+- mail_recrutement.eml → 896 caractères extraits ✓
+- presentation_alpha.pptx → 569 caractères extraits ✓
+
+**Fichier complété :** `app/core/generator.py` — fonctions `parse_txt()`,
+`parse_docx()`, `parse_pptx()`, `parse_eml()`, `parse_file()`, `parse_folder()`
+
+---
+
+### Étape 3 — Générer un document structuré via le LLM
+
+Écrit le prompt de structuration qui instruit le LLM à :
+- Fusionner les informations des différentes sources
+- Structurer en Markdown avec titres et sections
+- Signaler les lacunes avec [À COMPLÉTER]
+- Signaler les contradictions entre sources
+- Citer les sources en fin de document
+
+Test effectué en mode cloud (API Mistral) — la génération locale
+dépasse le timeout sur CPU avec Phi3 pour des documents longs.
+En production sur un serveur dimensionné, le mode local fonctionnerait.
+
+**Résultat validé :** document Markdown complet généré à partir des
+3 fichiers — planning, équipe, budget, décisions, points ouverts,
+sources citées. Les [À COMPLÉTER] apparaissent correctement. ✓
+
+**Fichier complété :** `app/core/generator.py` — fonctions
+`generate_document()`, `_generate_local()`, `_generate_cloud()`
+
+---
+
+## État du projet après J6
+
+✓ Parsers opérationnels pour Word, PowerPoint, mail et texte brut
+✓ Génération de document structuré Markdown à partir de sources hétérogènes
+✓ Lacunes et contradictions signalées automatiquement
+✓ Sources citées en fin de document généré
+✓ Architecture locale/cloud selon les ressources disponibles
+
+**Note technique :** la génération de documents longs nécessite
+le mode cloud sur cette machine de développement (timeout CPU).
+En déploiement production sur serveur dimensionné, le mode local
+est viable avec Mistral 7B ou LLaMA 3.
+
+**Prochaine étape — J7 :** interface Streamlit pour le Module 2
+— upload multi-fichiers, bouton générer, aperçu du document,
+téléchargement Word, validation avant indexation dans la base RAG.
