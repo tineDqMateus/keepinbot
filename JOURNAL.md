@@ -397,3 +397,77 @@ est viable avec Mistral 7B ou LLaMA 3.
 **Prochaine étape — J7 :** interface Streamlit pour le Module 2
 — upload multi-fichiers, bouton générer, aperçu du document,
 téléchargement Word, validation avant indexation dans la base RAG.
+
+## J7 — Onglet Documentation dans Streamlit
+
+**Objectif :** rendre le Module 2 utilisable depuis le navigateur —
+upload de fichiers, génération, téléchargement et validation avant indexation.
+
+---
+
+### Étape 1 — Construire l'interface de génération
+
+Créé l'onglet Documentation avec un workflow en 2 étapes :
+- Étape 1 : upload de plusieurs fichiers simultanément + saisie du titre
+- Étape 2 : aperçu du document généré, téléchargement Word, validation ou rejet
+
+**Fichier complété :** `app/tabs/documentation.py`
+
+---
+
+### Étape 2 — Convertir le document Markdown en Word
+
+Écrit la fonction `save_as_docx()` qui convertit le Markdown généré
+par le LLM en fichier Word téléchargeable.
+Deux corrections apportées :
+- Suppression des balises ```markdown``` que le LLM ajoute parfois
+- Déduplication du titre (présent dans le Markdown ET ajouté par Word)
+
+**Fichier complété :** `app/tabs/documentation.py` — fonction `save_as_docx()`
+
+---
+
+### Étape 3 — Valider et indexer dans la base RAG
+
+Implémenté le bouton "Valider et indexer" qui sauvegarde le document
+dans `data/corpus/` avec le préfixe `generated_` et reconstruit
+le vectorstore ChromaDB.
+
+Principe de validation humaine respecté : le document n'est jamais
+indexé automatiquement — l'utilisateur relit et valide explicitement.
+
+**Fichier complété :** `app/tabs/documentation.py` — fonction `index_document()`
+
+---
+
+### Étape 4 — Valider le pipeline bout en bout
+
+Test complet réalisé avec les 3 fichiers du corpus de démonstration :
+- Upload des 3 fichiers (Word, PPT, mail) ✓
+- Génération du document "Synthèse projet Alpha" en mode cloud ✓
+- Téléchargement Word sans doublon de titre ✓
+- Validation et indexation dans la base RAG ✓
+- Question posée dans l'onglet Assistant :
+  "Quand démarre le projet Alpha ?"
+  → "Le projet Alpha débute le 1er avril 2024.
+  (Source: generated_synthèse_projet_alpha.txt — interne)" ✓
+
+---
+
+## État du projet après J7
+
+✓ Onglet Documentation opérationnel dans le navigateur
+✓ Upload multi-fichiers (Word, PPT, mail, texte)
+✓ Génération de document structuré Markdown via API Mistral
+✓ Téléchargement en Word propre sans artefacts Markdown
+✓ Validation humaine obligatoire avant indexation
+✓ Document indexé et interrogeable depuis l'onglet Assistant
+
+**Note :** la génération est effectuée en mode cloud (API Mistral)
+sur cette machine de développement — le mode local dépasse le timeout
+CPU pour des documents longs. En production sur serveur dimensionné,
+le mode local est viable.
+
+**Prochaine étape — J8 :** Module 1 — collecte automatique de documents
+réglementaires publics (Légifrance, URSSAF) via scraping,
+parsing PDF et indexation dans la base RAG.
