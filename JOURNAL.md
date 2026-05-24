@@ -571,3 +571,83 @@ liste des documents publics indexés.
 
 **Prochaine étape — J9 :** onglet Administration, Dockerfile,
 docker-compose.yml et script de démarrage double-clic.
+
+## J9 — Onglet Administration + conteneurisation Docker
+
+**Objectif :** rendre Keepinbot déployable chez un client en un
+double-clic, sur réseau local d'entreprise, sans compétence technique.
+
+---
+
+### Étape 1 — Onglet Administration
+
+Interface de pilotage complète :
+- État des trois services : Ollama, ChromaDB, mode LLM
+- Statistiques de la base documentaire (documents internes,
+  publics indexés, PDFs en attente)
+- Liste des documents indexés par catégorie
+- Bouton "Reconstruire ChromaDB" — reconstruit le vectorstore
+  sans passer par le terminal
+- Bouton "Vider le chat" — efface l'historique de conversation
+- Informations système (chemins, URL, mode LLM)
+
+**Fichier complété :** `app/tabs/admin.py`
+
+---
+
+### Étape 2 — Dockerfile
+
+Conteneurisation de l'application Keepinbot.
+Image basée sur Python 3.11 slim — légère et reproductible.
+Le code, les dépendances et la configuration sont embarqués.
+Les dossiers `data/` sont montés comme volumes — les données
+persistent entre les redémarrages sans être dans l'image.
+
+**Fichier créé :** `Dockerfile`
+
+---
+
+### Étape 3 — docker-compose.yml
+
+Orchestration de deux services :
+- `app` : l'application Keepinbot (Streamlit)
+- `ollama` : le serveur LLM local
+
+Deux profils de déploiement :
+- **dev** (défaut) : port exposé sur localhost uniquement
+- **prod** : port exposé sur tout le réseau interne entreprise
+  (`0.0.0.0:8501`) — accessible depuis tous les postes
+
+Une seule ligne change entre développement et production.
+Les modèles Ollama sont persistés dans un volume nommé —
+pas besoin de retélécharger à chaque redémarrage.
+
+**Fichier créé :** `docker-compose.yml`
+
+---
+
+### Étape 4 — Script de démarrage double-clic
+
+Script shell `lancer.sh` qui :
+1. Vérifie que Docker est installé et démarré
+2. Lance `docker compose up -d` en arrière-plan
+3. Attend 30 secondes que les services démarrent
+4. Ouvre automatiquement le navigateur sur localhost:8501
+
+Le client installe Docker une fois — ensuite il double-clique
+sur `lancer.sh` pour démarrer Keepinbot. Aucun terminal nécessaire.
+
+**Fichier créé :** `lancer.sh`
+
+---
+
+## État du projet après J9
+
+✓ Onglet Administration opérationnel
+✓ Dockerfile — image reproductible et légère
+✓ docker-compose.yml — deux profils dev/prod
+✓ lancer.sh — démarrage double-clic sans terminal
+✓ Déployable sur réseau interne entreprise en profil prod
+
+**Prochaine étape — J10 :** finalisation — README complet,
+préparation du scénario de démo entretien, nettoyage du code.
