@@ -110,8 +110,7 @@ def render_collecte():
     if not legifrance_key:
         st.warning(
             "Clé API Légifrance non configurée. "
-            "Inscription gratuite sur [developer.aife.economie.gouv.fr](https://developer.aife.economie.gouv.fr). "
-            "Ajoutez `LEGIFRANCE_API_KEY` dans votre fichier `.env`."
+            "Inscription gratuite sur [piste.gouv.fr](https://piste.gouv.fr). "
         )
     else:
         search_input = st.text_input(

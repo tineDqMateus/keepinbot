@@ -219,7 +219,7 @@ def index_from_legifrance(search_term: str, api_key: str = None) -> list[dict]:
     API Légifrance (DILA) :
     - Gratuite, nécessite une clé d'accès (oauth2)
     - Documentation : https://api.gouv.fr/les-api/api-legifrance
-    - Inscription : https://developer.aife.economie.gouv.fr
+    - Inscription : https://piste.gouv.fr
 
     Paramètres :
     - search_term : terme de recherche (ex: "contrat de travail", "préavis")
