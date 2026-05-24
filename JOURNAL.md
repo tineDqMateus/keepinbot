@@ -651,3 +651,93 @@ sur `lancer.sh` pour démarrer Keepinbot. Aucun terminal nécessaire.
 
 **Prochaine étape — J10 :** finalisation — README complet,
 préparation du scénario de démo entretien, nettoyage du code.
+
+
+## J10 — Finalisation et préparation démo
+
+**Objectif :** nettoyer le code, finaliser la documentation et préparer
+le scénario de démo pour les entretiens.
+
+---
+
+### Étape 1 — Nettoyage du code
+
+Supprimé le print de debug `Config chargée — mode : local` dans
+`config.py` qui s'affichait à chaque import du module.
+Supprimé les prints de scores dans `rag.py` — utiles pendant
+le développement, inutiles en production.
+Corrigé l'indicateur de routage "Coupure : locale" → "Mode : Local"
+en remplaçant le mot "Routage" qui était traduit automatiquement
+par le navigateur.
+
+**Fichiers modifiés :** `app/core/config.py`, `app/core/rag.py`,
+`app/tabs/assistant.py`
+
+---
+
+### Étape 2 — README complet
+
+Mis à jour le README avec l'architecture complète, les cas d'usage,
+la stack technique, les instructions de démarrage rapide,
+les deux profils Docker (dev/prod) et les limites documentées.
+
+**Fichier modifié :** `README.md`
+
+---
+
+### Étape 3 — Fichier .env.example
+
+Créé `.env.example` — version du `.env` sans les vraies clés,
+pour que les futurs utilisateurs sachent quoi configurer.
+Inclut les variables Mistral, LLM_MODE, ChromaDB et Légifrance.
+
+**Fichier créé :** `.env.example`
+
+---
+
+### Étape 4 — Scénario de démo entretien
+
+Rédigé `DEMO_ENTRETIEN.md` — guide complet pour présenter
+Keepinbot en entretien :
+- Pitch 30 secondes
+- Checklist avant démo
+- Scénario 10 minutes onglet par onglet
+- Réponses aux questions techniques fréquentes
+- Points de différenciation à mettre en avant
+
+**Fichier créé :** `DEMO_ENTRETIEN.md`
+
+---
+
+### Étape 5 — Correction URL API Légifrance
+
+Corrigé l'URL du portail développeur Légifrance :
+`developer.aife.economie.gouv.fr` → `piste.gouv.fr`
+Mis à jour dans le code et dans l'interface Streamlit.
+
+**Fichiers modifiés :** `app/core/collector.py`, `app/tabs/collecte.py`
+
+---
+
+### Étape 6 — Test API Légifrance (en cours)
+
+Compte PISTE créé, application Keepinbot souscrite à l'API Légifrance.
+Test en attente de validation de la souscription (quelques heures).
+Les credentials sont configurés dans `.env`.
+
+---
+
+## État final du projet
+
+✓ Code nettoyé — prints de debug supprimés, indicateurs corrigés
+✓ README complet et à jour
+✓ .env.example documenté
+✓ Scénario de démo entretien rédigé
+✓ URL API Légifrance corrigée
+✓ Souscription PISTE en cours de validation
+
+**Le projet Keepinbot est complet et prêt pour les entretiens.**
+Les 3 modules sont opérationnels, l'interface est fonctionnelle,
+le déploiement Docker est documenté.
+Seul le test de la Source C (API Légifrance) est en attente
+de validation PISTE — à compléter quand la souscription sera active.
