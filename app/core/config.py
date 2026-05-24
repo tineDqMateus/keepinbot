@@ -48,7 +48,7 @@ CORPUS_PATH = "./data/corpus"
 #   500 est un bon compromis pour des documents métier en français.
 #   Augmenter si les documents ont des paragraphes très longs.
 #   Diminuer si les réponses contiennent trop d'informations non pertinentes.
-CHUNK_SIZE = 500
+CHUNK_SIZE = 800
 
 # CHUNK_OVERLAP : chevauchement entre deux chunks consécutifs en caractères.
 #   50 caractères évitent de perdre une information à la jonction
@@ -59,7 +59,7 @@ CHUNK_OVERLAP = 50
 #   3 chunks = contexte suffisant sans surcharger la fenêtre du LLM.
 #   Augmenter si les réponses semblent incomplètes.
 #   Diminuer si les réponses contiennent des informations hors sujet.
-TOP_K = 3
+TOP_K = 5
 
 # ── Paramètres LLM local (Ollama) ─────────────────────────────────────────────
 # OLLAMA_BASE_URL : adresse du serveur Ollama sur la machine locale.

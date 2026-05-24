@@ -38,22 +38,18 @@ Règles strictes — à suivre sans exception :
 
 def detect_route(chunks: list[dict]) -> str:
     """
-    Analyse les types des chunks récupérés et détermine le mode de routage.
+    Détermine le mode de routage selon les types des chunks récupérés.
 
-    Paramètre :
-    - chunks : liste de dicts retournée par retrieve()
-               chaque dict contient un champ "type" : "public" ou "interne"
+    Règle de routage affinée :
+    Si le chunk le plus pertinent (score le plus bas) est public
+    ET que le mode n'est pas forcé en local → cloud.
+    Cela évite qu'un chunk interne peu pertinent force inutilement
+    une génération locale lente.
 
-    Retourne une chaîne parmi :
-    - "local"  : tous les chunks sont internes → Ollama
-    - "cloud"  : tous les chunks sont publics → API Mistral
-    - "hybrid" : chunks mixtes → fusion, génération en local
-
-    Règle de sécurité :
-    Si LLM_MODE est forcé à "local" dans config.py (ex: développement),
-    on ignore le routage et on envoie tout en local.
+    Règle de sécurité maintenue :
+    Si le chunk le plus pertinent est interne → local obligatoire,
+    même si d'autres chunks publics sont présents.
     """
-    # Si le mode est forcé en local, on n'envoie rien sur le cloud
     if LLM_MODE == "local":
         return "local"
 
@@ -64,8 +60,13 @@ def detect_route(chunks: list[dict]) -> str:
     elif types == {"interne"}:
         return "local"
     else:
-        # Mélange public + interne → hybride, génération locale par sécurité
-        return "hybrid"
+        # Cas mixte — on regarde le chunk le plus pertinent (score le plus bas)
+        # Les chunks sont déjà triés par score croissant dans retrieve()
+        best_chunk = min(chunks, key=lambda c: c["score"])
+        if best_chunk["type"] == "public":
+            return "cloud"
+        else:
+            return "hybrid"
 
 
 def build_context(chunks: list[dict]) -> str:
