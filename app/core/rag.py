@@ -260,6 +260,7 @@ def retrieve(query: str, vectorstore: Chroma) -> list[dict]:
             "type": doc.metadata.get("type", "inconnu"),
             "score": round(score, 3)
         })
-        print(f"  → {doc.metadata.get('source')} (score : {round(score, 3)})")
+        # Affichage des scores dans la console à chaque question — inutile en production mais très utile pour le développement et le tuning du TOP_K
+        #print(f"  → {doc.metadata.get('source')} (score : {round(score, 3)})")
 
     return chunks

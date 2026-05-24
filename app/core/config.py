@@ -81,4 +81,5 @@ OLLAMA_MODEL = "phi3:mini"
 #                  "open-mistral-7b" (gratuit, moins performant)
 MISTRAL_MODEL = "mistral-small-latest"
 
-print(f"Config chargée — mode : {LLM_MODE}")
+# print de debug pour vérifier que la config est bien chargée
+#print(f"Config chargée — mode : {LLM_MODE}")

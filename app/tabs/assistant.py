@@ -6,7 +6,7 @@ Interface de chat RAG avec :
 - Zone de saisie de question
 - Affichage de la réponse générée
 - Sources affichées avec couleur selon le type (public/interne)
-- Indicateur de routage (local/cloud/hybrid)
+- Indicateur de Routage (Mode) : local/cloud/hybrid
 - Upload de nouveaux documents
 - Indicateur d'état des services
 """
@@ -14,6 +14,8 @@ Interface de chat RAG avec :
 import streamlit as st
 import requests
 import os
+
+from websockets import route
 from app.core.rag import (
     load_vectorstore, retrieve,
     load_documents, chunk_documents, build_vectorstore
@@ -69,7 +71,8 @@ def render_assistant():
                 if "route" in msg:
                     route = msg["route"]
                     color = "🟢" if route == "cloud" else "🟣" if route == "local" else "🟡"
-                    st.caption(f"{color} Routage : {route}")
+                    route_label = {"local": "Local", "cloud": "Cloud", "hybrid": "Hybride"}.get(route, route)
+                    st.caption(f"{color} Mode : {route_label}")
 
         # Zone de saisie
         question = st.chat_input("Votre question...")
@@ -100,8 +103,9 @@ def render_assistant():
                     st.caption(f"Sources : {' · '.join(source_display)}")
 
                 route = result["route"]
+                route_label = {"local": "Local", "cloud": "Cloud", "hybrid": "Hybride"}.get(route, route)
                 color = "🟢" if route == "cloud" else "🟣" if route == "local" else "🟡"
-                st.caption(f"{color} Routage : {route}")
+                st.caption(f"{color} Mode : {route_label}")
 
             st.session_state.messages.append({
                 "role": "assistant",
