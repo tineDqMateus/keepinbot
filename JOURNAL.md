@@ -471,3 +471,103 @@ le mode local est viable.
 **Prochaine étape — J8 :** Module 1 — collecte automatique de documents
 réglementaires publics (Légifrance, URSSAF) via scraping,
 parsing PDF et indexation dans la base RAG.
+
+
+## J8 — Module 1 : collecte automatique de documents publics
+
+**Objectif :** collecter automatiquement des documents réglementaires
+publics, les parser et les indexer dans la base RAG.
+
+---
+
+### Étape 1 — Implémenter le parser PDF
+
+Écrit la fonction `parse_pdf()` basée sur PyMuPDF (fitz).
+Extrait le texte page par page avec numérotation, gère les PDFs
+complexes et retourne les métadonnées (pages, date d'indexation).
+
+Correction apportée : le nombre de pages était lu après la fermeture
+du document — corrigé en sauvegardant la valeur avant `doc.close()`.
+
+**Fichier complété :** `app/core/collector.py` — fonction `parse_pdf()`
+
+---
+
+### Étape 2 — Trois sources de collecte indépendantes
+
+**Source A — Dossier surveillé**
+Scanne `data/public/`, parse les PDFs présents, les indexe dans
+ChromaDB et les déplace dans `data/public/indexed/` pour éviter
+le retraitement. Testée avec un PDF fictif généré via reportlab.
+
+**Source B — URL directe**
+Télécharge un PDF depuis une URL accessible, le parse et l'indexe.
+Non testable depuis ce réseau (blocage des sites gouvernementaux
+français) — code opérationnel pour un déploiement en production.
+
+**Source C — API Légifrance**
+Interroge l'API officielle DILA via OAuth2 pour récupérer des textes
+réglementaires. Nécessite une clé gratuite sur
+developer.aife.economie.gouv.fr. Structure codée et documentée,
+non testable sans clé API.
+
+**Fichier complété :** `app/core/collector.py`
+
+---
+
+### Étape 3 — Planificateur de collecte périodique
+
+Implémenté via APScheduler — surveille le dossier `data/public/`
+et indexe les nouveaux PDFs toutes les 24h en arrière-plan,
+sans interrompre l'application Streamlit.
+
+**Fichier complété :** `app/core/collector.py` — fonctions
+`start_scheduler()`, `get_scheduler_status()`
+
+---
+
+### Étape 4 — Ajustement du routeur et du chunking
+
+Deux problèmes identifiés et corrigés lors des tests :
+
+**Problème 1 — Routage hybrid inutile**
+Le routeur basculait en mode hybrid (génération locale) dès qu'un
+chunk interne peu pertinent s'invitait avec un chunk public.
+Corrigé : le routeur regarde maintenant le type du chunk le plus
+pertinent (score le plus bas) pour décider du mode.
+
+**Problème 2 — Mauvais chunking du PDF**
+CHUNK_SIZE=500 coupait les sections au mauvais endroit, mélangeant
+"visite médicale" et "période d'essai" dans le même chunk.
+Corrigé : CHUNK_SIZE augmenté à 800.
+Résultat validé : "durée maximale période d'essai cadre" → 4 mois ✓
+
+**Fichiers modifiés :**
+- `app/core/router.py` — fonction `detect_route()`
+- `app/core/config.py` — paramètre `CHUNK_SIZE`
+
+---
+
+### Étape 5 — Onglet Collecte dans Streamlit
+
+Interface avec trois sections correspondant aux trois sources,
+indicateurs d'état (PDFs en attente, documents indexés),
+liste des documents publics indexés.
+
+**Fichier complété :** `app/tabs/collecte.py`
+
+---
+
+## État du projet après J8
+
+✓ Parser PDF opérationnel (PyMuPDF)
+✓ Source A : indexation depuis dossier local testée et validée
+✓ Source B : téléchargement URL codé, prêt pour déploiement
+✓ Source C : API Légifrance structurée, prête avec clé API
+✓ Planificateur 24h implémenté
+✓ Routeur affiné — cloud activé dès que le chunk principal est public
+✓ CHUNK_SIZE optimisé à 800 pour un meilleur découpage
+✓ Onglet Collecte opérationnel dans le navigateur
+
+**Prochaine étape — J9 :** onglet Administration, Dockerfile,
+docker-compose.yml et script de démarrage double-clic.
