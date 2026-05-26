@@ -1,6 +1,106 @@
 # Journal de développement — Keepinbot
 
 ---
+## J1 — Setup et structure du projet
+
+**Objectif :** préparer l'environnement de travail, la structure du projet
+et les outils nécessaires au développement.
+
+---
+
+### Étape 1 — Créer le dépôt GitHub
+
+Création du dépôt public `keepinbot` sur GitHub avec licence MIT
+et fichier README initial.
+Clonage en local dans `Documents/GitHub/keepinbot`.
+
+**Dépôt :** https://github.com/tineDqMateus/keepinbot
+
+---
+
+### Étape 2 — Configurer l'environnement virtuel Python
+
+Création et activation de l'environnement virtuel `.venv`
+avec le prompt `keepinbot` pour l'identifier facilement dans le terminal.
+
+**Commande d'activation :** `source .venv/Scripts/activate` (Git Bash Windows)
+
+---
+
+### Étape 3 — Installer les dépendances
+
+Créé `requirements.txt` avec toutes les bibliothèques du projet.
+Installation en une commande : `pip install -r requirements.txt`
+
+Bibliothèques principales installées :
+- LangChain 0.3.7 — orchestration RAG
+- ChromaDB 0.5.23 — vector store local
+- Sentence-Transformers 3.3.1 — embeddings locaux
+- Streamlit 1.40.2 — interface web
+- PyMuPDF 1.24.14 — parsing PDF
+- python-docx, python-pptx — parsing Word et PowerPoint
+- RAGAS 0.2.6 — évaluation RAG
+- APScheduler 3.10.4 — planification collecte
+
+**Fichier créé :** `requirements.txt`
+
+---
+
+### Étape 4 — Configurer les fichiers de projet
+
+Créé `.env` avec la clé API Mistral et les paramètres de configuration.
+Créé `.gitignore` pour exclure `.env`, `.venv/` et `data/` du dépôt GitHub.
+
+**Fichiers créés :** `.env`, `.gitignore`
+
+---
+
+### Étape 5 — Créer la structure des dossiers
+
+Structure complète du projet créée avec tous les fichiers vides
+prêts à être implémentés :
+
+keepinbot/
+├── app/
+│   ├── core/    ← config, rag, router, generator, collector
+│   └── tabs/    ← assistant, documentation, collecte, admin
+├── data/
+│   ├── corpus/  ← documents internes
+│   ├── chroma/  ← vector store
+│   └── public/  ← documents publics
+└── scripts/     ← scripts de test et génération
+
+
+---
+
+### Étape 6 — Installer et configurer Ollama
+
+Ollama déjà installé (v0.24.0). Téléchargement du modèle Mistral 7B
+via `ollama pull mistral` (4.4 Go).
+Mistral 7B sera remplacé par Phi-3 Mini en J4 pour des contraintes
+de mémoire RAM.
+
+---
+
+### Étape 7 — Premier commit
+
+Structure complète poussée sur GitHub.
+
+---
+
+## État du projet après J1
+
+✓ Dépôt GitHub créé et synchronisé
+✓ Environnement virtuel Python activé
+✓ Toutes les dépendances installées (LangChain 0.3.7, Streamlit 1.40.2)
+✓ Structure du projet en place
+✓ Clé API Mistral configurée dans .env
+✓ Ollama + Mistral 7B opérationnels
+
+**Prochaine étape — J2 :** créer le corpus synthétique, implémenter
+le chunking, les embeddings et le stockage ChromaDB.
+
+
 
 ## J2 — Construire la base documentaire
 
