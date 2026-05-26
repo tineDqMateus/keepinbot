@@ -841,3 +841,24 @@ Les 3 modules sont opérationnels, l'interface est fonctionnelle,
 le déploiement Docker est documenté.
 Seul le test de la Source C (API Légifrance) est en attente
 de validation PISTE — à compléter quand la souscription sera active.
+
+
+
+### Étape 6 — Test API Légifrance (en cours)
+
+Compte PISTE créé, CGU acceptées, souscription à l'API Légifrance
+Production validée sur l'application Keepinbot.
+
+Tests effectués :
+- Authentification OAuth2 ✓ — token obtenu correctement
+- Ping API ✓ — `GET /list/ping` répond "pong" en 200
+- Recherche ✗ — erreur 500 "exception non gérée" côté serveur Légifrance
+
+Le ping confirme que l'authentification et l'accès à l'API fonctionnent.
+L'erreur 500 sur l'endpoint de recherche est une erreur serveur Légifrance —
+pas un problème de code. Deux causes possibles : délai d'activation de la
+souscription (quelques heures) ou instabilité temporaire de l'API.
+
+**À retester** : relancer `index_from_legifrance('contrat de travail')`
+après quelques heures. Si le 500 persiste, contacter le support PISTE
+via b2b-accompagnement.aife@finances.gouv.fr.

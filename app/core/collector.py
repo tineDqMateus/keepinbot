@@ -239,6 +239,7 @@ def index_from_legifrance(search_term: str, api_key: str = None) -> list[dict]:
         return [{"error": "Clé API Légifrance manquante. Ajouter LEGIFRANCE_API_KEY dans .env. Inscription gratuite sur developer.aife.economie.gouv.fr"}]
 
     # Structure de l'appel API Légifrance (OAuth2 + REST)
+    # URLs de production
     token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
     search_url = "https://api.piste.gouv.fr/dila/legifrance/lf-engine-app/search"
 
@@ -252,29 +253,41 @@ def index_from_legifrance(search_term: str, api_key: str = None) -> list[dict]:
         }, timeout=10)
 
         if token_response.status_code != 200:
-            return [{"error": f"Authentification Légifrance échouée : {token_response.status_code}"}]
+            return [{"error": f"Authentification Légifrance échouée : {token_response.status_code} — {token_response.text[:200]}"}]
 
         token = token_response.json().get("access_token")
+        print(f"Token obtenu : {token[:20]}..." if token else "Token absent")
 
         # Recherche de textes
         search_response = requests.post(
             search_url,
             headers={"Authorization": f"Bearer {token}"},
             json={
+                "fond": "ALL",
                 "recherche": {
-                    "champs": [{"typeChamp": "ALL", "criteres": [{"typeRecherche": "EXACTE", "valeur": search_term}]}],
+                    "champs": [
+                        {
+                            "typeChamp": "ALL",
+                            "criteres": [
+                                {
+                                    "typeRecherche": "UN_DES_MOTS",
+                                    "valeur": search_term
+                                }
+                            ],
+                            "operateur": "ET"
+                        }
+                    ],
                     "pageNumber": 1,
                     "pageSize": 5,
                     "sort": "PERTINENCE"
-                },
-                "fond": "CODE_DATE"
+                }
             },
             timeout=15
         )
 
         if search_response.status_code != 200:
-            return [{"error": f"Recherche Légifrance échouée : {search_response.status_code}"}]
-
+            return [{"error": f"Recherche Légifrance échouée : {search_response.status_code} — {search_response.text[:300]}"}]
+        
         results = search_response.json().get("results", [])
         indexed = []
 
