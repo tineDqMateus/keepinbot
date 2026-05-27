@@ -459,29 +459,4 @@ def effacer_historique() -> None:
     print("Historique de veille effacé.")
 
 
-# ── Planificateur ─────────────────────────────────────────────────────────────
-
-def start_veille_scheduler(heure: int = 6) -> None:
-    """
-    Ajoute la tâche de veille au planificateur APScheduler existant.
-    La veille est lancée tous les jours à l'heure configurée.
-
-    Paramètre :
-    - heure : heure de déclenchement (0-23, défaut : 6h du matin)
-
-    Note : cette fonction est appelée depuis main.py au démarrage
-    de l'application Streamlit.
-    """
-    from apscheduler.schedulers.background import BackgroundScheduler
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        lancer_veille,
-        trigger="cron",
-        hour=heure,
-        minute=0,
-        id="veille_reglementaire",
-        name=f"Veille réglementaire — {heure}h00"
-    )
-    scheduler.start()
-    print(f"Veille planifiée tous les jours à {heure}h00")
-    return scheduler
+# ── Planificateur de tâches Windows à configurer─────────────────────────────────────────────────────────────
