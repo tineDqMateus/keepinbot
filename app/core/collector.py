@@ -2,20 +2,36 @@
 collector.py
 Module 1 — Collecteur de documents publics — Keepinbot
 =======================================================
-Trois sources de collecte indépendantes qui alimentent le même pipeline :
 
-Source A — Dossier surveillé : indexe automatiquement les PDFs déposés
-           dans un dossier local (data/public/)
-Source B — URL directe : télécharge et indexe un PDF depuis une URL
-Source C — API Légifrance : interroge l'API officielle pour récupérer
-           des textes réglementaires (nécessite une clé API)
+Rôle : indexer des documents réglementaires publics dans la base RAG.
+Ces documents sont taggés "public" — ils peuvent être traités en mode
+cloud sans contrainte de confidentialité.
 
-Pipeline commun (identique pour les trois sources) :
-  PDF → parsing PyMuPDF → extraction métadonnées → chunking → ChromaDB
 
-Principe de confidentialité :
-Les documents collectés sont taggés "public" — ils peuvent être
-traités en mode cloud sans contrainte de confidentialité.
+Source A — Dossier surveillé (data/public/)
+  Indexe automatiquement les PDFs déposés manuellement.
+  Le planificateur vérifie toutes les 24h si de nouveaux fichiers
+  attendent d'être traités.
+  Gestion des mises à jour : si un fichier du même nom existe déjà,
+  l'ancienne version est archivée dans data/public/archive/ et ses
+  chunks sont supprimés de ChromaDB avant indexation de la nouvelle.
+
+
+
+Source B — URL directe (limitations)
+  Tente de télécharger un PDF depuis une URL fournie manuellement.
+  Non opérationnelle sur les sites gouvernementaux français —
+  bloqués par Cloudflare et protections anti-bot.
+  Peut fonctionner sur des URLs sans protection (intranets, serveurs
+  internes, sites partenaires).
+
+
+  PDF → extraction du texte (PyMuPDF) → chunking → ChromaDB
+
+─── Module de veille (à venir) ───────────────────────────────────────
+
+  Recherche web automatique quotidienne via API Tavily pour détecter
+  les modifications réglementaires et alerter l'utilisateur.
 """
 
 import os
@@ -32,6 +48,8 @@ PUBLIC_FOLDER = "./data/public"
 # Dossier des documents déjà indexés — évite les doublons
 INDEXED_FOLDER = "./data/public/indexed"
 
+# Dossier d'archive pour les documents obsolètes ou à conserver hors indexation
+ARCHIVE_FOLDER = "./data/public/archive"
 
 # ── Parser PDF ────────────────────────────────────────────────────────────────
 
@@ -91,53 +109,88 @@ def parse_pdf(filepath: str) -> dict:
 
 
 # ── Source A — Dossier surveillé ──────────────────────────────────────────────
+def remove_from_vectorstore(filename: str) -> None:
+    """
+    Supprime tous les chunks d'un document de ChromaDB.
+    Appelée avant l'indexation d'une nouvelle version du même document
+    pour éviter les doublons et les réponses contradictoires.
+
+    Paramètre :
+    - filename : nom du fichier source (ex: "guide_embauche.pdf")
+    """
+    try:
+        from app.core.rag import load_vectorstore
+        vs = load_vectorstore()
+        vs._collection.delete(where={"source": filename})
+        print(f"Chunks supprimés pour : {filename}")
+    except Exception as e:
+        print(f"Erreur suppression chunks {filename} : {e}")
+
 
 def index_folder(folder_path: str = PUBLIC_FOLDER) -> list[dict]:
     """
-    Scanne un dossier local, parse tous les PDFs présents
-    et les indexe dans ChromaDB.
+    Scanne le dossier de dépôt, indexe les nouveaux PDFs
+    et gère automatiquement les mises à jour de documents existants.
 
     Workflow :
-    1. Liste les PDFs dans le dossier
-    2. Parse chaque PDF avec parse_pdf()
-    3. Déplace les PDFs indexés dans le sous-dossier indexed/
-       pour éviter de les retraiter à la prochaine exécution
-    4. Met à jour le vectorstore ChromaDB
+    1. Scanne data/public/ à la recherche de PDFs
+    2. Pour chaque PDF :
+       - Si une version existe déjà dans indexed/ :
+         → Archive l'ancienne version avec timestamp dans archive/
+         → Supprime les anciens chunks dans ChromaDB
+       - Parse le nouveau PDF
+       - Indexe dans ChromaDB
+       - Déplace dans indexed/
+    3. Garantit qu'une seule version par document est dans ChromaDB
 
     Paramètre :
-    - folder_path : chemin vers le dossier à surveiller
-                    (par défaut : data/public/)
+    - folder_path : dossier à scanner (défaut : data/public/)
 
     Retourne :
     - liste de dicts des documents indexés avec succès
     """
+    from datetime import datetime
+
     os.makedirs(folder_path, exist_ok=True)
     os.makedirs(INDEXED_FOLDER, exist_ok=True)
+    os.makedirs(ARCHIVE_FOLDER, exist_ok=True)
 
     pdfs = [f for f in os.listdir(folder_path) if f.endswith(".pdf")]
 
     if not pdfs:
-        print(f"Aucun PDF trouvé dans {folder_path}")
+        print(f"Aucun PDF en attente dans {folder_path}")
         return []
 
     parsed = []
     for filename in pdfs:
         filepath = os.path.join(folder_path, filename)
-        result = parse_pdf(filepath)
+        indexed_path = os.path.join(INDEXED_FOLDER, filename)
 
+        # Mise à jour : une version existe déjà
+        if os.path.exists(indexed_path):
+            print(f"Mise à jour détectée : {filename}")
+            # Archiver l'ancienne version avec timestamp
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            archive_path = os.path.join(ARCHIVE_FOLDER, f"{ts}_{filename}")
+            os.rename(indexed_path, archive_path)
+            print(f"Archivé : {archive_path}")
+            # Supprimer les anciens chunks dans ChromaDB
+            remove_from_vectorstore(filename)
+
+        # Parser le nouveau PDF
+        result = parse_pdf(filepath)
         if result["error"]:
             print(f"Erreur parsing {filename} : {result['error']}")
             continue
 
-        print(f"Parsé : {filename} ({result['pages']} pages, {len(result['content'])} caractères)")
+        print(f"Parsé : {filename} ({result['pages']} pages, "
+              f"{len(result['content'])} caractères)")
         parsed.append(result)
 
-        # Déplacement dans indexed/ pour éviter le retraitement
-        indexed_path = os.path.join(INDEXED_FOLDER, filename)
+        # Déplacer dans indexed/
         os.rename(filepath, indexed_path)
 
     if parsed:
-        # Mise à jour du vectorstore avec les nouveaux documents
         chunks = chunk_documents(parsed)
         build_vectorstore(chunks)
         print(f"{len(parsed)} document(s) indexé(s) dans ChromaDB")
@@ -208,114 +261,6 @@ def index_from_url(url: str, filename: str = None) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-
-# ── Source C — API Légifrance ─────────────────────────────────────────────────
-
-def index_from_legifrance(search_term: str, api_key: str = None) -> list[dict]:
-    """
-    Interroge l'API officielle Légifrance pour récupérer des textes
-    réglementaires et les indexer dans ChromaDB.
-
-    API Légifrance (DILA) :
-    - Gratuite, nécessite une clé d'accès (oauth2)
-    - Documentation : https://api.gouv.fr/les-api/api-legifrance
-    - Inscription : https://piste.gouv.fr
-
-    Paramètres :
-    - search_term : terme de recherche (ex: "contrat de travail", "préavis")
-    - api_key     : clé API Légifrance (ou None si non configurée)
-
-    Retourne :
-    - liste de dicts des textes indexés
-
-    Note : cette source est non testable sans clé API.
-    Le code est prêt pour un déploiement avec clé configurée
-    dans le fichier .env (LEGIFRANCE_API_KEY).
-    """
-    if not api_key:
-        api_key = os.getenv("LEGIFRANCE_API_KEY")
-
-    if not api_key:
-        return [{"error": "Clé API Légifrance manquante. Ajouter LEGIFRANCE_API_KEY dans .env. Inscription gratuite sur developer.aife.economie.gouv.fr"}]
-
-    # Structure de l'appel API Légifrance (OAuth2 + REST)
-    # URLs de production
-    token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
-    search_url = "https://api.piste.gouv.fr/dila/legifrance/lf-engine-app/search"
-
-    try:
-        # Authentification OAuth2
-        token_response = requests.post(token_url, data={
-            "grant_type": "client_credentials",
-            "client_id": api_key,
-            "client_secret": os.getenv("LEGIFRANCE_API_SECRET", ""),
-            "scope": "openid"
-        }, timeout=10)
-
-        if token_response.status_code != 200:
-            return [{"error": f"Authentification Légifrance échouée : {token_response.status_code} — {token_response.text[:200]}"}]
-
-        token = token_response.json().get("access_token")
-        print(f"Token obtenu : {token[:20]}..." if token else "Token absent")
-
-        # Recherche de textes
-        search_response = requests.post(
-            search_url,
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "fond": "ALL",
-                "recherche": {
-                    "champs": [
-                        {
-                            "typeChamp": "ALL",
-                            "criteres": [
-                                {
-                                    "typeRecherche": "UN_DES_MOTS",
-                                    "valeur": search_term
-                                }
-                            ],
-                            "operateur": "ET"
-                        }
-                    ],
-                    "pageNumber": 1,
-                    "pageSize": 5,
-                    "sort": "PERTINENCE"
-                }
-            },
-            timeout=15
-        )
-
-        if search_response.status_code != 200:
-            return [{"error": f"Recherche Légifrance échouée : {search_response.status_code} — {search_response.text[:300]}"}]
-        
-        results = search_response.json().get("results", [])
-        indexed = []
-
-        for item in results:
-            title = item.get("titles", [{}])[0].get("title", "Sans titre")
-            text = item.get("excerpt", "")
-
-            if text:
-                doc = {
-                    "content": f"{title}\n\n{text}",
-                    "source": f"legifrance_{title[:50].replace(' ', '_')}.txt",
-                    "type": "public",
-                    "pages": 1,
-                    "date_index": datetime.now().isoformat(),
-                    "error": None
-                }
-                indexed.append(doc)
-                print(f"Récupéré : {title}")
-
-        if indexed:
-            chunks = chunk_documents(indexed)
-            build_vectorstore(chunks)
-            print(f"{len(indexed)} texte(s) Légifrance indexé(s)")
-
-        return indexed
-
-    except Exception as e:
-        return [{"error": str(e)}]
 
 
 # ── Planification périodique ──────────────────────────────────────────────────

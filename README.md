@@ -23,10 +23,11 @@ technique côté client.
 ## Architecture — 3 modules
 
 ### Module 1 — Collecte
-Pipeline automatisé qui surveille un dossier local, télécharge des PDFs depuis des URLs
-publiques, ou interroge l'API Légifrance. Les documents sont parsés, indexés dans la base
-vectorielle et taggés `public` — ils peuvent être traités en mode cloud sans contrainte
-de confidentialité.
+Indexe automatiquement les documents déposés dans un dossier local.
+Intégration API Légifrance disponible — authentification validée,
+endpoint de recherche en cours de résolution.
+Le scraping automatique de sites gouvernementaux est limité
+par les protections anti-bot.
 
 ### Module 2 — Génération
 À partir d'un corpus hétérogène (mails, PowerPoints, Word, comptes-rendus), produit un
@@ -35,9 +36,10 @@ les lacunes et contradictions détectées dans les sources. Aucun document gén�
 dans la base sans validation humaine explicite.
 
 ### Module 3 — Assistant RAG
-Chatbot qui répond en langage naturel aux questions sur la documentation indexée, en citant
-ses sources. Un routeur hybride oriente chaque requête vers le moteur adapté selon la nature
+Chatbot qui répond en langage naturel en citant ses sources. 
+Un routeur hybride en local oriente chaque requête vers le moteur adapté selon la nature
 des documents concernés.
+Pour les documents publics uniquement, la génération est déléguée à l'API Mistral (cloud).
 
 ---
 
