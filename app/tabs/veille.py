@@ -90,6 +90,15 @@ def render_veille():
                 f"{rapport['nb_changements']} changement(s) détecté(s)"
             )
 
+            if rapport['nb_changements'] == rapport['nb_sujets']:
+                st.info(
+                    "💡 Tous les sujets sont signalés comme nouveaux — "
+                    "cela indique probablement que la base documentaire "
+                    "ne contient pas encore de documents réglementaires officiels. "
+                    "Téléchargez les documents depuis les liens ci-dessous "
+                    "et déposez-les dans l'onglet Collecte Réglementation."
+                )
+
             st.divider()
 
             # Résultats par sujet
@@ -100,9 +109,10 @@ def render_veille():
                         f"🔴 **{r['sujet']}**\n\n{r['resume']}"
                     )
                     if r.get("sources"):
+                        st.caption("📥 Consultez ces sources officielles pour télécharger les documents mis à jour :")
                         for url in r["sources"]:
                             if url:
-                                st.caption(f"🔗 {url}")
+                                st.markdown(f"🔗 [{url}]({url})")
                 else:
                     # Pas de changement — affiché normalement
                     st.success(

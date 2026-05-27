@@ -194,13 +194,16 @@ def rechercher_sujet(sujet: str, api_key: str) -> dict:
 
 def analyser_changement(sujet: str, resultats: list[dict]) -> dict:
     """
-    Demande au LLM d'analyser les résultats de recherche et de détecter
-    si une modification réglementaire significative est signalée.
+    Analyse les résultats Tavily en les comparant avec le contenu
+    déjà indexé dans ChromaDB pour ce sujet.
 
-    Le LLM reçoit les titres et extraits des résultats Tavily et répond :
-    - changed : True si un changement récent est détecté, False sinon
-    - resume  : résumé court du changement ou "Pas de modification détectée"
-    - sources : liste des URLs sources
+    Logique de comparaison :
+    1. Récupère les passages déjà indexés dans ChromaDB sur ce sujet
+    2. Compare avec les résultats Tavily
+    3. Le LLM détecte uniquement ce qui est NOUVEAU par rapport à la base
+
+    Si ChromaDB ne contient rien sur ce sujet → changed=True uniquement
+    si les résultats Tavily mentionnent un changement très récent et concret.
 
     Paramètres :
     - sujet     : sujet recherché
@@ -216,38 +219,78 @@ def analyser_changement(sujet: str, resultats: list[dict]) -> dict:
     if not resultats:
         return {
             "changed": False,
-            "resume": "Aucun résultat de recherche.",
+            "resume": "Aucun résultat de recherche sur les sources officielles.",
             "sources": []
         }
 
-    # Assemblage du contexte pour le LLM
-    context = "\n\n".join([
+    # Assemblage du contexte Tavily
+    context_tavily = "\n\n".join([
         f"Titre : {r.get('title', '')}\n"
         f"Extrait : {r.get('content', '')[:300]}\n"
         f"URL : {r.get('url', '')}"
         for r in resultats
     ])
 
-    prompt = f"""Sujet de veille : {sujet}
+    # Récupération du contenu déjà indexé dans ChromaDB sur ce sujet
+    context_base = ""
+    try:
+        from app.core.rag import load_vectorstore, retrieve
+        vs = load_vectorstore()
+        chunks = retrieve(sujet, vs)
+        if chunks:
+            context_base = "\n\n".join([
+                f"[Déjà indexé — {c['source']}]\n{c['content'][:300]}"
+                for c in chunks
+            ])
+    except Exception:
+        context_base = ""
 
-Résultats de recherche récents :
-{context}
+    # Prompt de comparaison
+    if context_base:
+        prompt = f"""Sujet de veille réglementaire : {sujet}
 
-Analyse ces résultats et réponds en JSON strict avec exactement ces champs :
+Contenu DÉJÀ INDEXÉ dans la base documentaire :
+{context_base}
+
+Nouvelles informations trouvées sur les sites officiels :
+{context_tavily}
+
+Question : les nouvelles informations apportent-elles des éléments
+NOUVEAUX et CONCRETS qui ne sont PAS déjà couverts par la base documentaire ?
+
+Réponds en JSON strict :
 {{
   "changed": true ou false,
-  "resume": "résumé en une phrase du changement détecté, ou 'Pas de modification détectée'"
+  "resume": "description du changement nouveau, ou 'La base documentaire est à jour sur ce sujet'"
 }}
 
-changed = true uniquement si un changement réglementaire RÉCENT et CONCRET est mentionné.
-changed = false si les résultats sont anciens, généraux ou sans nouveauté."""
+changed = true UNIQUEMENT si les nouvelles informations contiennent
+des faits concrets absents de la base (nouvelles dates, nouveaux montants,
+nouvelles règles). changed = false si la base couvre déjà l'information."""
+
+    else:
+        # Pas de contenu dans ChromaDB — on détecte juste si c'est récent
+        prompt = f"""Sujet de veille réglementaire : {sujet}
+
+Aucun document sur ce sujet n'est encore indexé dans la base documentaire.
+
+Informations trouvées sur les sites officiels :
+{context_tavily}
+
+Ces informations mentionnent-elles un changement réglementaire
+RÉCENT et CONCRET (nouvelles dates, nouveaux montants, nouvelles règles) ?
+
+Réponds en JSON strict :
+{{
+  "changed": true ou false,
+  "resume": "description du changement détecté, ou 'Pas de modification récente détectée'"
+}}"""
 
     # Génération via LLM
     response_text = _appeler_llm(prompt)
 
     # Parse la réponse JSON
     try:
-        # Nettoyage des balises markdown éventuelles
         clean = response_text.strip()
         if clean.startswith("```"):
             clean = clean.split("```")[1]
@@ -257,7 +300,6 @@ changed = false si les résultats sont anciens, généraux ou sans nouveauté.""
         result["sources"] = [r.get("url", "") for r in resultats]
         return result
     except Exception:
-        # Fallback si le JSON est mal formé
         changed = "true" in response_text.lower() and "false" not in response_text.lower()
         return {
             "changed": changed,

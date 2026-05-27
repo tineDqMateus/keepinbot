@@ -35,19 +35,19 @@ st.divider()
 # ── Navigation par onglets ────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Assistant",
-    "Documentation",
-    "Collecte",
     "Veille",
-    "Administration"
+    "Collecte Réglementation",
+    "Base interne",
+    "Admin"
 ])
 
 with tab1:
     render_assistant()
 with tab2:
-    render_documentation()
+    render_veille()
 with tab3:
     render_collecte()
 with tab4:
-    render_veille()
+    render_documentation()
 with tab5:
     render_admin()
