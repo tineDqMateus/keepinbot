@@ -131,6 +131,29 @@ docker compose --profile prod up
 
 L'application est accessible depuis tous les postes sur http://IP_SERVEUR:8501
 
+
+### Veille réglementaire automatique (optionnel)
+
+La veille se lance manuellement depuis l'onglet Veille ou automatiquement
+via le Planificateur de tâches Windows.
+
+**Configuration du Planificateur de tâches Windows :**
+
+1. Touche Windows → **Planificateur de tâches**
+2. **Créer une tâche de base**
+3. Nom : `Keepinbot — Veille réglementaire`
+4. Déclencheur : **Tous les jours** → heure souhaitée (ex : 6h00)
+5. Action : **Démarrer un programme**
+   - Programme : `C:\chemin\vers\keepinbot\.venv\Scripts\python.exe`
+   - Arguments : `scripts\run_veille.py`
+   - Démarrer dans : `C:\chemin\vers\keepinbot`
+6. **Terminer**
+
+Les résultats sont disponibles dans l'onglet **Veille** de l'interface.
+En cas de changement détecté, téléchargez les nouveaux documents
+depuis les sources officielles et déposez-les dans l'onglet **Collecte**.
+
+
 ---
 
 ## Limites
