@@ -8,10 +8,7 @@ Interface du Module 1 — Indexation de documents publics dans la base RAG.
 ─── Source A — Dépôt manuel (seule source validée) ───────────────────
 
 L'utilisateur télécharge les PDFs depuis son navigateur et les dépose
-dans data/public/. Le planificateur indexe automatiquement toutes les
-24h. Si un document du même nom existe déjà, l'ancienne version est
-archivée dans data/public/archive/ et remplacée dans la base de
-recherche — le chatbot ne consulte que la version la plus récente.
+dans data/public/. Cliquez sur "Indexer les PDFs en attente" pour les intégrer à la base.
 
 ─── Source B — URL directe (expérimentale) ───────────────────────────
 
@@ -50,7 +47,7 @@ def render_collecte():
     Rendu de l'onglet Collecte.
     """
     st.subheader("Collecte de documents réglementaires")
-    st.caption("Indexez automatiquement des documents publics dans la base RAG.")
+    st.caption("Déposez vos PDFs dans le dossier de collecte et indexez-les manuellement.")
 
     # ── État de la collecte ───────────────────────────────────────────────────
     col1, col2 = st.columns(2)

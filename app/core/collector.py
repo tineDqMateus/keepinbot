@@ -17,7 +17,6 @@ Source A — Dossier surveillé (data/public/)
   chunks sont supprimés de ChromaDB avant indexation de la nouvelle.
 
 
-
 Source B — URL directe (limitations)
   Tente de télécharger un PDF depuis une URL fournie manuellement.
   Non opérationnelle sur les sites gouvernementaux français —
@@ -28,17 +27,13 @@ Source B — URL directe (limitations)
 
   PDF → extraction du texte (PyMuPDF) → chunking → ChromaDB
 
-─── Module de veille (à venir) ───────────────────────────────────────
 
-  Recherche web automatique quotidienne via API Tavily pour détecter
-  les modifications réglementaires et alerter l'utilisateur.
 """
 
 import os
 import requests
 import fitz  # PyMuPDF
 from datetime import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
 from app.core.rag import chunk_documents, build_vectorstore, load_vectorstore
 from app.core.config import CHROMA_PATH
 
@@ -263,60 +258,4 @@ def index_from_url(url: str, filename: str = None) -> dict:
 
 
 
-# ── Planification périodique ──────────────────────────────────────────────────
-
-def start_scheduler(interval_hours: int = 24) -> BackgroundScheduler:
-    """
-    Lance un planificateur qui exécute la collecte périodiquement.
-    Surveille le dossier data/public/ et indexe les nouveaux PDFs.
-
-    Paramètre :
-    - interval_hours : fréquence de collecte en heures (défaut : 24h)
-                       En production : 24h pour une veille quotidienne.
-                       En développement : réduire pour tester.
-
-    Retourne :
-    - instance BackgroundScheduler active
-
-    Note : le scheduler tourne en arrière-plan dans un thread séparé —
-    il n'interrompt pas l'application Streamlit.
-    """
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        index_folder,
-        trigger="interval",
-        hours=interval_hours,
-        id="collecte_publique",
-        name="Collecte documents publics"
-    )
-    scheduler.start()
-    print(f"Planificateur démarré — collecte toutes les {interval_hours}h")
-    return scheduler
-
-
-def get_scheduler_status(scheduler: BackgroundScheduler) -> dict:
-    """
-    Retourne l'état du planificateur pour l'affichage dans l'interface.
-
-    Paramètre :
-    - scheduler : instance BackgroundScheduler retournée par start_scheduler()
-
-    Retourne un dict :
-    {
-      "running"    : True si le scheduler est actif (bool),
-      "next_run"   : date/heure de la prochaine exécution (str),
-      "last_index" : nombre de fichiers dans indexed/ (int)
-    }
-    """
-    jobs = scheduler.get_jobs()
-    next_run = None
-    if jobs:
-        next_run = jobs[0].next_run_time.strftime("%d/%m/%Y %H:%M") if jobs[0].next_run_time else "Non planifié"
-
-    indexed_count = len(os.listdir(INDEXED_FOLDER)) if os.path.exists(INDEXED_FOLDER) else 0
-
-    return {
-        "running": scheduler.running,
-        "next_run": next_run,
-        "last_index": indexed_count
-    }
+# ── Planification périodique à gérer via Windows Scheduler ──────────────────────────────────────────────────
