@@ -24,6 +24,7 @@ st.set_page_config(
 from app.tabs.assistant import render_assistant
 from app.tabs.documentation import render_documentation
 from app.tabs.collecte import render_collecte
+from app.tabs.veille import render_veille
 from app.tabs.admin import render_admin
 
 # ── En-tête ───────────────────────────────────────────────────────────────────
@@ -32,21 +33,21 @@ st.caption("Plutôt que de tout garder à l'esprit, on charge le bot.")
 st.divider()
 
 # ── Navigation par onglets ────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Assistant",
     "Documentation",
     "Collecte",
+    "Veille",
     "Administration"
 ])
 
 with tab1:
     render_assistant()
-
 with tab2:
     render_documentation()
-
 with tab3:
     render_collecte()
-
 with tab4:
+    render_veille()
+with tab5:
     render_admin()

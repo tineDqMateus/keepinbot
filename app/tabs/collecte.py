@@ -2,16 +2,37 @@
 collecte.py
 Onglet Collecte — Keepinbot
 =============================
-Interface du Module 1 — Collecte automatique de documents publics.
 
-Deux modes de collecte :
-- Source A : dépôt manuel de PDFs dans data/public/
-- Source B : téléchargement depuis une URL directe
+Interface du Module 1 — Indexation de documents publics dans la base RAG.
 
+─── Source A — Dépôt manuel (seule source validée) ───────────────────
 
-Affiche également l'état de la collecte :
-- Documents déjà indexés
-- Prochaine exécution planifiée
+L'utilisateur télécharge les PDFs depuis son navigateur et les dépose
+dans data/public/. Le planificateur indexe automatiquement toutes les
+24h. Si un document du même nom existe déjà, l'ancienne version est
+archivée dans data/public/archive/ et remplacée dans la base de
+recherche — le chatbot ne consulte que la version la plus récente.
+
+─── Source B — URL directe (expérimentale) ───────────────────────────
+
+Tente de télécharger un PDF depuis une URL saisie manuellement.
+Non opérationnelle sur les sites gouvernementaux français (Cloudflare,
+protections anti-bot). Peut fonctionner sur des serveurs sans protection :
+intranets d'entreprise, serveurs internes, sites partenaires.
+En cas d'échec, télécharger le PDF manuellement et utiliser la Source A.
+
+─── Affichage ────────────────────────────────────────────────────────
+
+- Nombre de PDFs en attente d'indexation
+- Nombre de documents publics indexés
+- Liste des documents indexés
+
+─── Avertissement ────────────────────────────────────────────────────
+
+La législation française (Code du travail, SMIC, conventions collectives)
+évolue plusieurs fois par an. La fraîcheur des documents est de la
+responsabilité de l'utilisateur. Une mise à jour manuelle du corpus
+est recommandée au minimum tous les 3 mois.
 """
 
 import streamlit as st
@@ -19,7 +40,6 @@ import os
 from app.core.collector import (
     index_folder,
     index_from_url,
-    index_from_legifrance,
     PUBLIC_FOLDER,
     INDEXED_FOLDER
 )
