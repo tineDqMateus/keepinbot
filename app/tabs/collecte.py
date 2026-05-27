@@ -36,45 +36,73 @@ import streamlit as st
 import os
 from app.core.collector import (
     index_folder,
-    index_from_url,
     PUBLIC_FOLDER,
-    INDEXED_FOLDER
+    INDEXED_FOLDER,
+    ARCHIVE_FOLDER
 )
 
 
 def render_collecte():
     """
-    Rendu de l'onglet Collecte.
+    Rendu de l'onglet Collecte Réglementation.
     """
-    st.subheader("Collecte de documents réglementaires")
-    st.caption("Déposez vos PDFs dans le dossier de collecte et indexez-les manuellement.")
+    st.subheader("Collecte Réglementation")
+    st.caption(
+        "Déposez vos PDFs réglementaires dans le dossier `data/public/` "
+        "puis cliquez sur Indexer pour les intégrer à la base de recherche."
+    )
+    st.info(
+        "💡 **Workflow recommandé :**\n\n"
+        "1. Consultez l'onglet **Veille** pour identifier les changements détectés\n"
+        "2. Téléchargez les documents depuis les liens officiels fournis\n"
+        "3. Déposez les PDFs dans `data/public/`\n"
+        "4. Cliquez sur **Indexer** ci-dessous\n"
+        "5. Retournez dans **Veille** et effacez l'historique"
+    )
 
-    # ── État de la collecte ───────────────────────────────────────────────────
+    st.caption(
+    "💡 Après indexation, les fichiers sont automatiquement déplacés "
+    "dans `data/public/indexed/` — ils restent valables jusqu'à remplacement. "
+    "Déposez uniquement les documents signalés comme modifiés par la veille, "
+    "en conservant le même nom de fichier que la version existante."
+    )
+
+    st.divider()
+
+    # ── État ──────────────────────────────────────────────────────────────────
     col1, col2 = st.columns(2)
 
-    with col1:
-        # Documents en attente d'indexation
-        pending = []
-        if os.path.exists(PUBLIC_FOLDER):
-            pending = [f for f in os.listdir(PUBLIC_FOLDER) if f.endswith(".pdf")]
-        st.metric("PDFs en attente", len(pending))
+    pending = []
+    if os.path.exists(PUBLIC_FOLDER):
+        pending = [f for f in os.listdir(PUBLIC_FOLDER) if f.endswith(".pdf")]
 
+    indexed = []
+    if os.path.exists(INDEXED_FOLDER):
+        indexed = os.listdir(INDEXED_FOLDER)
+
+    with col1:
+        st.metric("PDFs en attente", len(pending))
     with col2:
-        # Documents déjà indexés
-        indexed = []
-        if os.path.exists(INDEXED_FOLDER):
-            indexed = os.listdir(INDEXED_FOLDER)
         st.metric("Documents indexés", len(indexed))
 
     st.divider()
 
-    # ── Source A — Dossier surveillé ──────────────────────────────────────────
-    st.markdown("### Source A — Dépôt de PDFs")
-    st.caption(f"Déposez vos PDFs dans `{PUBLIC_FOLDER}` puis cliquez sur Indexer.")
+    # ── Indexation ────────────────────────────────────────────────────────────
+    st.markdown("### Indexer les PDFs")
 
     if pending:
         st.info(f"{len(pending)} PDF(s) en attente : {', '.join(pending)}")
-        if st.button("Indexer les PDFs en attente", type="primary"):
+    else:
+        st.caption("Aucun PDF en attente dans `data/public/`.")
+        st.caption(
+            "Déposez vos PDFs dans ce dossier depuis l'explorateur Windows, "
+            "puis cliquez sur Indexer."
+        )
+
+    if st.button("Indexer les PDFs en attente", type="primary"):
+        if not pending:
+            st.warning("Aucun PDF à indexer — déposez d'abord des fichiers dans `data/public/`.")
+        else:
             with st.spinner("Indexation en cours..."):
                 results = index_folder()
             if results:
@@ -84,55 +112,35 @@ def render_collecte():
                 st.rerun()
             else:
                 st.error("Aucun document indexé — vérifier les fichiers.")
-    else:
-        st.info(f"Aucun PDF en attente dans `{PUBLIC_FOLDER}`.")
 
     st.divider()
 
-    # ── Source B — URL directe ────────────────────────────────────────────────
-    st.markdown("### Source B — Téléchargement depuis une URL")
-    st.caption(
-        "⚠️ **Limitations connues** : les sites gouvernementaux français "
-        "(Légifrance, URSSAF, service-public.fr) bloquent les requêtes "
-        "automatiques. Cette source fonctionne uniquement sur des URLs "
-        "sans protection anti-bot (intranets, serveurs internes, sites partenaires)."
-    )
-
-    url_input = st.text_input(
-        "URL du PDF",
-        placeholder="https://votre-serveur-interne/document.pdf"
-    )
-    filename_input = st.text_input(
-        "Nom du fichier (optionnel)",
-        placeholder="document_public.pdf"
-    )
-
-    if url_input:
-        if st.button("Télécharger et indexer", type="primary"):
-            with st.spinner(f"Téléchargement de {url_input}..."):
-                result = index_from_url(
-                    url_input,
-                    filename_input if filename_input else None
-                )
-            if result.get("error"):
-                st.error(f"Erreur : {result['error']}")
-                st.info(
-                    "Le téléchargement a échoué — probablement bloqué par le serveur. "
-                    "Téléchargez le PDF manuellement depuis votre navigateur "
-                    "et déposez-le dans le dossier via la Source A."
-                )
-            else:
-                st.success(f"Indexé : {result['source']} — {result['pages']} page(s)")
-                st.rerun()
-
-    st.divider()
-
-
-    # ── Liste des documents indexés ───────────────────────────────────────────
-    st.markdown("### Documents publics indexés")
+    # ── Documents indexés ─────────────────────────────────────────────────────
+    st.markdown("### Documents indexés")
 
     if indexed:
         for filename in sorted(indexed):
             st.caption(f"🟢 {filename}")
     else:
-        st.info("Aucun document public indexé pour le moment.")
+        st.info("Aucun document réglementaire indexé pour le moment.")
+
+    # ── Archive ───────────────────────────────────────────────────────────────
+    archive = []
+    if os.path.exists(ARCHIVE_FOLDER):
+        archive = os.listdir(ARCHIVE_FOLDER)
+
+    if archive:
+        st.divider()
+        st.markdown("### Archive")
+        st.caption(f"{len(archive)} version(s) archivée(s) dans `data/public/archive/`")
+        with st.expander("Voir les versions archivées"):
+            for filename in sorted(archive, reverse=True):
+                st.caption(f"📦 {filename}")
+
+    # ── Avertissement ─────────────────────────────────────────────────────────
+    st.divider()
+    st.warning(
+        "⚠️ La législation française évolue plusieurs fois par an. "
+        "Consultez régulièrement l'onglet **Veille** pour détecter "
+        "les modifications et mettre à jour vos documents."
+    )
