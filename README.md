@@ -22,12 +22,38 @@ technique côté client.
 
 ## Architecture — 3 modules
 
-### Module 1 — Collecte
-Indexe automatiquement les documents déposés dans un dossier local.
-Intégration API Légifrance disponible — authentification validée,
-endpoint de recherche en cours de résolution.
-Le scraping automatique de sites gouvernementaux est limité
-par les protections anti-bot.
+### Module 1 — Collecte Réglementation
+
+Indexe les documents réglementaires publics déposés manuellement.
+
+**Workflow :**
+1. L'onglet **Veille** détecte quotidiennement les changements réglementaires
+   via API Tavily sur les sources officielles (Légifrance, URSSAF, service-public.fr...)
+2. En cas de changement 🔴, télécharger le document depuis le lien officiel fourni
+3. Déposer le PDF dans `data/public/` en conservant le même nom de fichier
+   que la version existante
+4. Cliquer sur **Indexer** dans l'onglet Collecte Réglementation
+5. L'ancienne version est automatiquement archivée dans `data/public/archive/`
+   et remplacée dans la base de recherche
+6. Effacer l'historique de veille dans l'onglet Veille
+
+**Gestion des versions :**
+- `data/public/` — zone de dépôt temporaire (vidée après indexation)
+- `data/public/indexed/` — documents en vigueur dans la base
+- `data/public/archive/` — versions remplacées conservées avec horodatage
+
+**État actuel :**
+Le dépôt manuel et l'indexation automatique sont opérationnels et testés.
+Le téléchargement depuis des URLs publiques est disponible dans l'interface
+mais non opérationnel sur les sites gouvernementaux français
+(Cloudflare, protections anti-bot).
+
+**Veille réglementaire :**
+Recherche quotidienne via API Tavily filtrée sur les sources officielles.
+Compare les résultats avec le contenu déjà indexé dans ChromaDB —
+signale uniquement les changements absents de la base.
+Planifiable via le Planificateur de tâches Windows (voir ci-dessous).
+
 
 ### Module 2 — Génération
 À partir d'un corpus hétérogène (mails, PowerPoints, Word, comptes-rendus), produit un
@@ -132,7 +158,7 @@ docker compose --profile prod up
 L'application est accessible depuis tous les postes sur http://IP_SERVEUR:8501
 
 
-### Veille réglementaire automatique (optionnel)
+### Veille réglementaire automatique
 
 La veille se lance manuellement depuis l'onglet Veille ou automatiquement
 via le Planificateur de tâches Windows.
@@ -151,7 +177,7 @@ via le Planificateur de tâches Windows.
 
 Les résultats sont disponibles dans l'onglet **Veille** de l'interface.
 En cas de changement détecté, téléchargez les nouveaux documents
-depuis les sources officielles et déposez-les dans l'onglet **Collecte**.
+depuis les sources officielles et déposez-les dans l'onglet **Collecte Réglementation**.
 
 
 ---
