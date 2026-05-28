@@ -862,3 +862,115 @@ souscription (quelques heures) ou instabilité temporaire de l'API.
 **À retester** : relancer `index_from_legifrance('contrat de travail')`
 après quelques heures. Si le 500 persiste, contacter le support PISTE
 via b2b-accompagnement.aife@finances.gouv.fr.
+
+
+
+## Après J10 — Corrections et évolutions post-finalisation
+
+### Correction 1 — Gestion des versions de documents (collector.py)
+
+Problème identifié : sans mécanisme de déduplication, déposer plusieurs
+versions d'un même document créait des doublons dans ChromaDB — le chatbot
+pouvait répondre avec des informations contradictoires.
+
+Solution implémentée :
+- Ajout de `remove_from_vectorstore()` — supprime les anciens chunks
+  avant d'indexer une nouvelle version
+- Ajout de `ARCHIVE_FOLDER` (data/public/archive/) — archive automatiquement
+  l'ancienne version avec horodatage avant remplacement
+- `index_folder()` détecte si un fichier du même nom existe déjà dans
+  indexed/ et applique le remplacement automatique
+
+**Fichier modifié :** `app/core/collector.py`
+
+---
+
+### Correction 2 — Suppression Source C Légifrance et nettoyage Source B
+
+L'API Légifrance (PISTE) retourne une erreur 500 non résolue sur l'endpoint
+de recherche. Le scraping automatique de sites gouvernementaux est bloqué
+par Cloudflare.
+
+Actions :
+- Suppression complète de `index_from_legifrance()` de collector.py
+- Suppression de la Source C de l'onglet Collecte
+- Correction de la description Source B — limitations réseau documentées
+- Suppression du scheduler APScheduler — remplacé par cron Docker
+- Suppression de apscheduler de requirements.txt
+
+**Fichiers modifiés :** `app/core/collector.py`, `app/tabs/collecte.py`,
+`requirements.txt`
+
+---
+
+### Évolution 3 — Module de veille réglementaire (Tavily)
+
+Nouveau module de veille réglementaire automatique via API Tavily.
+
+Fonctionnement :
+- Recherche quotidienne sur 10 sujets réglementaires configurables
+- Filtrage sur sources officielles uniquement (Légifrance, URSSAF,
+  service-public.fr, travail-emploi.gouv.fr, ameli.fr, info.gouv.fr...)
+- Comparaison des résultats avec le contenu déjà indexé dans ChromaDB
+  — signale uniquement les changements absents de la base
+- Quota Tavily : 1 000 requêtes gratuites/mois — alerte à 80%
+- Résultats stockés dans data/veille/YYYY-MM-DD.json
+- Historique effaçable manuellement après mise à jour des documents
+
+Workflow complet :
+1. Veille détecte un changement 🔴
+2. Liens officiels affichés pour téléchargement
+3. PDF déposé dans data/public/ avec le même nom
+4. Clic Indexer → ancienne version archivée, nouvelle indexée
+5. Historique de veille effacé
+
+Planification : cron job dans Docker — tous les jours à 6h
+(configurable dans le Dockerfile)
+
+**Fichiers créés :** `app/core/veille.py`, `app/tabs/veille.py`,
+`scripts/run_veille.py`
+
+---
+
+### Évolution 4 — Refonte interface Streamlit
+
+- Renommage des onglets : Assistant | Veille | Collecte Réglementation |
+  Base interne | Admin
+- Veille placée avant Collecte — ordre logique du workflow
+- Onglet Collecte Réglementation simplifié : Source B supprimée,
+  workflow clair, convention de nommage documentée
+- Message d'alerte si tous les sujets sont en rouge (base vide)
+
+**Fichiers modifiés :** `app/main.py`, `app/tabs/collecte.py`,
+`app/tabs/veille.py`
+
+---
+
+### Évolution 5 — Docker et déploiement
+
+- Création du `docker-compose.yml` (absent du commit J9 malgré le message)
+- Intégration de cron dans le Dockerfile — veille lancée automatiquement
+  à 6h sans Python sur la machine hôte
+- Ajout du volume `data/veille/` dans docker-compose.yml
+- Ajout de `TAVILY_API_KEY` dans les variables d'environnement Docker
+
+**Fichiers modifiés :** `Dockerfile`, `docker-compose.yml`
+
+---
+
+## État du projet — version finale
+
+✓ Pipeline RAG hybride local/cloud opérationnel
+✓ Module 2 (Base interne) — parsers multi-format + génération documentaire
+✓ Module 1 (Collecte Réglementation) — dépôt manuel + indexation + archivage
+✓ Veille réglementaire — Tavily + sources officielles + comparaison ChromaDB
+✓ Interface Streamlit 5 onglets — workflow utilisateur clair
+✓ Docker — cron intégré, zéro Python requis sur la machine hôte
+✓ README et documentation à jour
+
+**Limitations documentées :**
+- API Légifrance : authentification OK, endpoint recherche erreur 500 non résolue
+- Scraping automatique : bloqué par Cloudflare sur les sites gouvernementaux
+- Génération de documents longs : mode cloud recommandé sur machines modestes
+- Corpus de démonstration : fictif (Artisan Plus SARL)
+- Fraîcheur des données : responsabilité de l'utilisateur
