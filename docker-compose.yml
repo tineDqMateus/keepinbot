@@ -1,0 +1,77 @@
+# docker-compose.yml — Keepinbot
+# ================================
+# Deux profils de déploiement :
+# - dev (défaut)  : localhost uniquement, pour le développement
+# - prod          : réseau interne entreprise, pour le déploiement
+#
+# Lancer en développement : docker compose up
+# Lancer en production    : docker compose --profile prod up
+
+version: "3.9"
+
+services:
+
+  # ── Application Keepinbot ──────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: keepinbot_app
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      - PYTHONPATH=/app
+      - LLM_MODE=${LLM_MODE:-local}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - CHROMA_PATH=/app/data/chroma
+      - CORPUS_PATH=/app/data/corpus
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - ./data/corpus:/app/data/corpus
+      - ./data/chroma:/app/data/chroma
+      - ./data/public:/app/data/public
+      - ./data/samples:/app/data/samples
+      - ./data/veille:/app/data/veille
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # ── Application Keepinbot (profil production) ──────────────────────────────
+  app_prod:
+    build: .
+    container_name: keepinbot_app_prod
+    profiles:
+      - prod
+    ports:
+      - "0.0.0.0:8501:8501"
+    environment:
+      - PYTHONPATH=/app
+      - LLM_MODE=${LLM_MODE:-local}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - CHROMA_PATH=/app/data/chroma
+      - CORPUS_PATH=/app/data/corpus
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - ./data/corpus:/app/data/corpus
+      - ./data/chroma:/app/data/chroma
+      - ./data/public:/app/data/public
+      - ./data/samples:/app/data/samples
+      - ./data/veille:/app/data/veille
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # ── Ollama — LLM local ─────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: keepinbot_ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_NUM_GPU=0
+    restart: unless-stopped
+
+volumes:
+  ollama_models:
