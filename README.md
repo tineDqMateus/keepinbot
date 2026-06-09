@@ -94,24 +94,25 @@ interface web. Aucun terminal, aucune dépendance à gérer côté client.
 En profil production (`docker compose --profile prod up`), l'application est
 accessible depuis tous les postes du réseau interne de l'entreprise.
 
-**Option A — PC Windows dans les locaux**
-Docker Desktop + `lancer.sh`. Si le PC se met en veille, configurer le
-Planificateur de tâches Windows pour le réveiller à 5h55 (avant le cron
-de veille à 6h). Docker Desktop doit être configuré pour démarrer
-automatiquement avec Windows.
+**Option A — Serveur existant (PC ou serveur)**
+Docker + `lancer.sh`. La surveillance réglementaire quotidienne est automatique
+via le cron Docker.
+Sur PC Windows : nécessité de le garder allumé et planificateur de tâches
+Windows à configurer pour le réveiller à 5h55 (avant le cron de surveillance
+à 6h). Docker Desktop doit être configuré pour démarrer automatiquement
+avec Windows.
 
-**Option B — Serveur Linux dans les locaux (recommandé)**
-Solution optimale pour la production — données sur site, veille automatique
-24h/24 sans contrainte de mise en veille. Un mini-serveur suffit (NUC Intel,
-ancien PC, NAS compatible Docker) avec 16 Go RAM.
-Docker Engine (version serveur, plus légère que Desktop) + systemd pour
-le démarrage automatique. Même `docker-compose.yml` que sur Windows —
-aucune configuration supplémentaire pour la veille.
+**Option B — Serveur dédié (recommandé si pas de serveur existant)**
+Un mini-serveur suffit (NUC Intel, ancien PC, NAS compatible Docker) avec
+16 Go RAM. Docker Engine (version serveur, plus légère que Desktop) + systemd
+pour le démarrage automatique. Même `docker-compose.yml` — aucune
+configuration supplémentaire pour la surveillance réglementaire.
+Achat mini-serveur : 300-600 €.
 
 **Option C — VPS chez un hébergeur**
-Veille automatique 24h/24 mais les données internes transitent hors site.
-À réserver aux documents publics uniquement si la confidentialité est une
-contrainte forte.
+Surveillance automatique sans contrainte mais les données internes transitent
+hors site. À réserver aux documents publics uniquement si la confidentialité
+est une contrainte forte.
 
 ---
 
