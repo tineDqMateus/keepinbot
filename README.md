@@ -87,12 +87,31 @@ configuration — API externe pour la démonstration, modèle local pour un dép
 Pas de licence, pas de vendor lock-in.
 
 ### Déployabilité
-L'application est conteneurisée (Docker). Le client installe Docker une fois, double-clique
-sur `lancer.sh` pour démarrer, interagit uniquement via une interface web. Aucun terminal,
-aucune dépendance à gérer côté client.
+L'application est conteneurisée (Docker). Le client installe Docker une fois,
+double-clique sur `lancer.sh` pour démarrer, interagit uniquement via une
+interface web. Aucun terminal, aucune dépendance à gérer côté client.
 
-En profil production (`docker compose --profile prod up`), l'application est accessible
-depuis tous les postes du réseau interne de l'entreprise.
+En profil production (`docker compose --profile prod up`), l'application est
+accessible depuis tous les postes du réseau interne de l'entreprise.
+
+**Option A — PC Windows dans les locaux**
+Docker Desktop + `lancer.sh`. Si le PC se met en veille, configurer le
+Planificateur de tâches Windows pour le réveiller à 5h55 (avant le cron
+de veille à 6h). Docker Desktop doit être configuré pour démarrer
+automatiquement avec Windows.
+
+**Option B — Serveur Linux dans les locaux (recommandé)**
+Solution optimale pour la production — données sur site, veille automatique
+24h/24 sans contrainte de mise en veille. Un mini-serveur suffit (NUC Intel,
+ancien PC, NAS compatible Docker) avec 16 Go RAM.
+Docker Engine (version serveur, plus légère que Desktop) + systemd pour
+le démarrage automatique. Même `docker-compose.yml` que sur Windows —
+aucune configuration supplémentaire pour la veille.
+
+**Option C — VPS chez un hébergeur**
+Veille automatique 24h/24 mais les données internes transitent hors site.
+À réserver aux documents publics uniquement si la confidentialité est une
+contrainte forte.
 
 ---
 
