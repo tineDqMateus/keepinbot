@@ -179,24 +179,27 @@ L'application est accessible depuis tous les postes sur http://IP_SERVEUR:8501
 
 ### Veille réglementaire automatique
 
-La veille se lance manuellement depuis l'onglet Veille ou automatiquement
-via le Planificateur de tâches Windows.
+La veille est lancée automatiquement tous les jours à 6h par le cron
+intégré dans Docker — aucune configuration requise.
+Les résultats sont disponibles dans l'onglet **Veille** de l'interface.
 
-**Configuration du Planificateur de tâches Windows :**
+**Si le PC Windows se met en veille la nuit**, configurer le Planificateur
+de tâches pour le réveiller avant 6h :
 
 1. Touche Windows → **Planificateur de tâches**
 2. **Créer une tâche de base**
-3. Nom : `Keepinbot — Veille réglementaire`
-4. Déclencheur : **Tous les jours** → heure souhaitée (ex : 6h00)
-5. Action : **Démarrer un programme**
-   - Programme : `C:\chemin\vers\keepinbot\.venv\Scripts\python.exe`
-   - Arguments : `scripts\run_veille.py`
-   - Démarrer dans : `C:\chemin\vers\keepinbot`
-6. **Terminer**
+3. Nom : `Keepinbot — Réveil veille`
+4. Déclencheur : **Tous les jours à 5h55**
+5. Cocher **"Sortir l'ordinateur du mode veille"**
+6. Action : Démarrer un programme → `cmd.exe` / Arguments : `/c echo Keepinbot`
+7. **Terminer**
 
-Les résultats sont disponibles dans l'onglet **Veille** de l'interface.
-En cas de changement détecté, téléchargez les nouveaux documents
-depuis les sources officielles et déposez-les dans l'onglet **Collecte Réglementation**.
+Sur serveur Linux, aucune configuration supplémentaire — le cron Docker
+tourne en continu.
+
+En cas de changement détecté 🔴, téléchargez les nouveaux documents
+depuis les liens officiels fournis et déposez-les dans l'onglet
+**Collecte Réglementation**.
 
 
 ---
