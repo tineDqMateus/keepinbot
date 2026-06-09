@@ -3,11 +3,17 @@ main.py
 Keepinbot — Point d'entrée de l'application Streamlit
 ======================================================
 Lance l'interface avec : streamlit run app/main.py
-Quatre onglets :
-- Assistant    : chatbot RAG avec citations sources
-- Documentation: génération de documents (Module 2 — J6-J7)
-- Collecte     : veille réglementaire automatisée (Module 1 — J8)
-- Administration: pilotage des services Docker (J9)
+
+Cinq onglets :
+- Assistant             : chatbot RAG — questions en langage naturel,
+                          réponses sourcées, routage local/cloud
+- Veille                : résultats de la veille réglementaire quotidienne
+                          (Tavily + comparaison ChromaDB)
+- Collecte Réglementation: indexation des PDFs officiels déposés manuellement
+- Base interne          : génération de documents structurés depuis des
+                          fichiers hétérogènes (Word, PPT, mail)
+- Admin                 : état des services, reconstruction ChromaDB,
+                          informations système
 """
 
 import streamlit as st
