@@ -1,7 +1,7 @@
 """
 documentation.py
 
-Onglet Documentation — Keepinbot
+Onglet Base interne — Keepinbot
 ==================================
 Interface du Module 2 — Génération de documentation.
 

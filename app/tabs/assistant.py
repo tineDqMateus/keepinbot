@@ -15,7 +15,6 @@ import streamlit as st
 import requests
 import os
 
-from websockets import route
 from app.core.rag import (
     load_vectorstore, retrieve,
     load_documents, chunk_documents, build_vectorstore

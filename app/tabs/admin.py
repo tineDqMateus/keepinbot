@@ -6,9 +6,11 @@ Interface de pilotage des services depuis le navigateur.
 
 Fonctionnalités :
 - État des services (Ollama, ChromaDB, mode LLM)
-- Démarrage/arrêt du planificateur de collecte
-- Statistiques de la base documentaire
-- Configuration du mode LLM (local/cloud)
+- Statistiques de la base documentaire (documents internes, publics, en attente)
+- Liste des documents indexés par catégorie
+- Reconstruction du vectorstore ChromaDB
+- Vidage de l'historique de chat
+- Informations système (chemins, URLs, mode LLM)
 """
 
 import streamlit as st
