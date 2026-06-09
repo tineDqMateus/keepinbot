@@ -9,13 +9,13 @@ cloud sans contrainte de confidentialité.
 
 
 Source A — Dossier surveillé (data/public/)
-  Indexe automatiquement les PDFs déposés manuellement.
-  Le planificateur vérifie toutes les 24h si de nouveaux fichiers
-  attendent d'être traités.
+  Indexe les PDFs déposés manuellement dans data/public/.
+  Le bouton "Indexer" dans l'onglet Collecte Réglementation déclenche
+  l'indexation. Le cron Docker (6h) peut aussi déclencher l'indexation
+  si des fichiers sont en attente.
   Gestion des mises à jour : si un fichier du même nom existe déjà,
   l'ancienne version est archivée dans data/public/archive/ et ses
   chunks sont supprimés de ChromaDB avant indexation de la nouvelle.
-
 
 Source B — URL directe (limitations)
   Tente de télécharger un PDF depuis une URL fournie manuellement.
@@ -24,7 +24,7 @@ Source B — URL directe (limitations)
   Peut fonctionner sur des URLs sans protection (intranets, serveurs
   internes, sites partenaires).
 
-
+Pipeline commun (Source A et B) :
   PDF → extraction du texte (PyMuPDF) → chunking → ChromaDB
 
 

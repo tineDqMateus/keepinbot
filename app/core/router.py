@@ -5,7 +5,7 @@ Analyse les chunks récupérés par le retrieval et décide
 quel moteur LLM utiliser pour générer la réponse :
 - Chunks publics uniquement  → cloud (API Mistral)
 - Chunks internes uniquement → local (Ollama + Phi3)
-- Chunks mixtes              → les deux retrievals, génération en local
+- Chunks mixtes              → génération en local par sécurité (données internes impliquées)
 
 Principe de sécurité : dès qu'un chunk interne est impliqué,
 la génération reste en local — les données sensibles

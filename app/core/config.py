@@ -19,7 +19,7 @@ load_dotenv()
 
 # ── Mode LLM ──────────────────────────────────────────────────────────────────
 # Détermine quel moteur de génération est utilisé.
-# "local"  → Ollama + Mistral 7B — données traitées sur la machine du client,
+# "local"  → Ollama + Phi-3 Mini — données traitées sur la machine du client,
 #             zéro appel externe. Obligatoire pour les données sensibles.
 # "cloud"  → API Mistral — plus rapide, nécessite une connexion internet
 #             et une clé API. Réservé aux données publiques non sensibles.

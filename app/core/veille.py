@@ -9,7 +9,8 @@ les modifications réglementaires et alerter l'utilisateur.
 Fonctionnement :
 - Tous les jours à l'heure configurée (défaut : 6h)
 - Lance une recherche Tavily pour chaque sujet de veille configuré
-- Le LLM analyse les résultats et détecte si quelque chose a changé
+- Le LLM compare les résultats Tavily avec le contenu déjà indexé
+  dans ChromaDB — alerte uniquement si du nouveau dans la base
 - Les résultats sont stockés dans data/veille/YYYY-MM-DD.json
 - L'historique est conservé jusqu'à effacement manuel
 
